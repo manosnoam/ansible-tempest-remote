@@ -1,0 +1,30 @@
+---
+
+## Run Example:
+## $ export JJB_DIR=~/VENVS/JJB && source $JJB_DIR/bin/activate
+## (JJB) $ ansible-playbook playbooks/remote-debug-tempest.yml -i environments/undercloud.inventory -v --check
+
+#- post_tasks:
+#  name: Checking if output contains errors
+#  fail: msg={{ out.stderr.split('\n') }}
+#  when: out.stderr is defined and out.stderr
+##      failed_when: "out.stderr"
+#  tags:
+#  - always
+
+- name: My Debug
+# hostname can be passed as argument to playbook, otherwise use the default inventory hosts under 'tempest_hosts'
+  hosts: local
+  gather_facts: False
+  vars:
+  - my_var: " "
+    debug:
+      msg: >
+        my_var = {{ my_var }}
+  post_tasks:
+    - name: Checking var
+      debug: msg=OK
+      when: my_var | trim  == ''
+      tags:
+      - always
+

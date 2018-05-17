@@ -1,6 +1,0 @@
----
-
-- name: MoonGen run
-  hosts: moongen
-  roles:
-    - packet_gen/moongen/run
