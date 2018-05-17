@@ -1,0 +1,7 @@
+---
+
+- name: TripleO inventory creation
+  hosts: localhost
+  gather_facts: no
+  roles:
+    - post_install/tripleo_inventory

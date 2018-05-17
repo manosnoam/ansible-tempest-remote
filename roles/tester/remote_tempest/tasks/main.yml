@@ -1,0 +1,141 @@
+---
+
+- name: Install Tempest and prerequisites (pip, git, virtualenv, etc.)
+#  tags:
+#    - tempest_debug
+#  when: debug is defined
+  #when: tempest_debug is defined and tempest_debug
+  shell: |
+    packageList="git gcc python-devel libffi-devel openssl-devel crudini python-tempestconf"
+    echo -e "\n* Installing Packages: $packageList"
+    for packageName in $packageList; do
+      rpm --quiet --query $packageName || sudo yum install -y $packageName
+    done
+
+    echo -e "\n* Installing Pip, VirtualEnv and Pytest:"
+    sudo easy_install pip
+    sudo pip install virtualenv
+    virtualenv .venv
+    source .venv/bin/activate
+    pip install pytest
+
+    #remote_branch="17.2.0"
+    remote_branch="master"
+    remote_repo="https://github.com/openstack/tempest.git"
+    local_repo=tempest
+    echo -e "\n* Git: $remote_repo @ $remote_branch"
+
+    if [ -d $local_repo/.git ]; then
+       echo -e "\n* Local repository exists, pulling..."
+       pushd $local_repo
+       git branch $remote_branch
+       git checkout $remote_branch
+       git pull
+       git tag -l
+       popd
+    else
+       echo -e "\n* Cloning..."
+       git clone --depth 1 --branch $remote_branch $remote_repo
+    fi
+    pip install -e $local_repo/
+
+    echo -e "\n* Tempest version installed:"
+    which tempest
+    tempest --version
+  register: out
+
+- name: Install Tempest Plugins (Loop with all [tempest_plugins] listed in Inventory)
+#  tags:
+#    - tempest_debug
+  shell: |
+    PROMPT_COMMAND=
+    set -v
+    #virtualenv .venv
+    source .venv/bin/activate
+
+    remote_repo={{ hostvars[item].repo }}
+    local_repo=$(basename "$remote_repo")
+    remote_branch="master"
+    #if [ -d $local_repo/.git ]; then pushd $local_repo; git pull; popd; else git clone $remote_repo; fi
+
+    echo -e "\n* Git: $remote_repo @ $remote_branch"
+
+    if [ -d $local_repo/.git ]; then
+       echo -e "\n* Local repository exists, pulling..."
+       pushd $local_repo
+       git branch $remote_branch
+       git checkout $remote_branch
+       git pull
+       git tag -l
+       popd
+    else
+       echo -e "\n* Cloning..."
+       git clone --depth 1 --branch $remote_branch $remote_repo
+    fi
+
+    pip install -e $local_repo/
+    tempest list-plugins
+  with_items: "{{ groups['tempest_plugins'] }}" # "{{ groups[plugins_group_iterator] }}" #groups['tempest_plugins']
+  register: out
+  #  failed_when: "out.stderr"
+
+
+- name: Configure Tempest on Virtual Env. (according to OSP version)
+  tags:
+   - tempest_debug
+  shell: |
+    #virtualenv .venv
+    source .venv/bin/activate
+    source ~/overcloudrc
+    tempest init my_workspace
+    tempest workspace list
+    cd my_workspace
+
+    osp_version=$(cat /etc/yum.repos.d/latest-installed | awk '{print $1}')
+    echo "osp_version = $osp_version"
+    echo -e "\n* Due to BUGZ - Modifying tempest.conf and verify_tempest_config.py :"
+
+    if (($osp_version < 11)); then
+      /usr/share/openstack-tempest-*/tools/configure-tempest-directory
+      python tools/config_tempest.py --deployer-input ~/tempest-deployer-input.conf --debug --create identity.uri $OS_AUTH_URL identity.admin_password $OS_PASSWORD
+      crudini --set ./etc/tempest.conf image-feature-enabled api_v1 "False"
+      crudini --set ./etc/tempest.conf image-feature-enabled api_v2 "False"
+    else
+      discover-tempest-config --deployer-input ~/tempest-deployer-input.conf --debug --create identity.uri $OS_AUTH_URL identity.admin_password $OS_PASSWORD
+      crudini --del ./etc/tempest.conf volume-feature-enabled api_extensions
+
+      # Workaround for BugZilla 1562085 :
+      crudini --set ./etc/tempest.conf validation run_validation "True"
+      crudini --set ./etc/tempest.conf service_available load_balancer "True"
+      sed -i.bak "354i\\\t'load_balancer': 'load_balancer'," /home/stack/.venv/lib/python2.7/site-packages/tempest/cmd/verify_tempest_config.py
+
+      # Workaround for Octavia missing security group, and Bugzilla 1577635 :
+      crudini --set ./etc/tempest.conf load_balancer enable_security_groups "True"
+      crudini --set ./etc/tempest.conf network_feature_enabled port_security "True"
+
+      # Workaround for Bugzilla 1577635 :
+      crudini --set ./etc/tempest.conf load_balancer member_role "_member_"
+      crudini --set ./etc/tempest.conf load_balancer admin_role "admin"
+
+      # Workaround for BugZilla 1508904 :
+      openstack role list | grep -q load-balancer_member || openstack role create load-balancer_member
+      openstack role add --user demo --project demo load-balancer_member
+      openstack role assignment list --names
+      openstack role list | grep -q load-balancer_admin || openstack role create load-balancer_admin
+      openstack role add --user demo --project demo load-balancer_admin
+      openstack role assignment list --names | awk 'NR<4 || /load-balancer/'
+    fi
+
+    # Workaround for activating tempest debug output:
+    crudini --set ./etc/tempest.conf DEFAULT debug "true"
+    crudini --set ./etc/tempest.conf DEFAULT use_stderr "true"
+
+    echo -e "\n* Verifing Tempest config inside workspace: $PWD"
+    #python ~/.venv/bin/tempest verify-config
+    tempest verify-config -o ./etc/tempest.conf
+    sudo cp -rp ./etc/tempest.conf /etc/tempest/
+    ls -l /etc/tempest/tempest.conf
+  register: out
+  #  failed_when: "out.stderr"
+
+

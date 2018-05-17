@@ -1,0 +1,6 @@
+---
+
+- name: Openstack tasks
+  hosts: undercloud
+  roles:
+    - post_install/openstack_tasks

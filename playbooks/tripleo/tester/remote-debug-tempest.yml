@@ -1,0 +1,84 @@
+---
+
+## Run Example:
+## $ export JJB_DIR=~/VENVS/JJB && source $JJB_DIR/bin/activate
+## (JJB) $ ansible-playbook playbooks/tripleo/tester/remote-debug-tempest.yml -i playbooks/tripleo/tester/noam.inventory -v
+
+#- post_tasks:
+#  name: Checking if output contains errors 2222222222222222
+#  fail: msg={{ out.stderr.split('\n') }}
+#  when: out.stderr is defined and out.stderr
+##      failed_when: "out.stderr"
+#  tags:
+#  - always
+
+- name: Copy SSH Key from localhost to Tempest Host
+# hostname can be passed as argument to playbook, otherwise use the default inventory hosts under 'tempest_hosts'
+  hosts: local
+  gather_facts: False
+  roles:
+  - role: tuning/ssh_send_rsa_key
+    hosts_group_iterator: tempest_hosts
+  post_tasks:
+    - name: Checking if output contains errors
+      fail: msg={{ out.stderr.split('\n') }}
+      when: out.stderr is defined and out.stderr
+#      failed_when: "out.stderr"
+      tags:
+      - always
+
+- name: Configure Host Firewall
+# hostname can be passed as argument to playbook, otherwise use the default inventory hosts under 'tempest_hosts'
+  hosts: "{{ hostname | default('tempest_hosts') }}"
+  gather_facts: false
+  roles:
+  - tuning/ssh_tunnel
+  post_tasks:
+    - name: Checking if output contains errors
+      fail: msg={{ out.stderr.split('\n') }}
+      when: out.stderr is defined and out.stderr
+#      failed_when: "out.stderr"
+      tags:
+      - always
+
+- name: Copy SSH Key from localhost to Tempest Undercloud
+# hostname can be passed as argument to playbook, otherwise use the default inventory hosts under 'tempest_hosts'
+  hosts: local
+  gather_facts: false
+  roles:
+  - role: tuning/ssh_send_rsa_key
+#    hosts_group_iterator: tempest_undercloud
+    hosts_group_iterator: tempest_hosts
+    ssh_user: stack
+    ssh_port: 222
+  post_tasks:
+    - name: Checking if output contains errors
+      fail: msg={{ out.stderr.split('\n') }}
+      when: out.stderr is defined and out.stderr
+#      failed_when: "out.stderr"
+      tags:
+      - always
+
+- name: Tempest deployment on Undercloud Virtual Env
+# target host is usually the undercloud-0 VM inside the baremetal host (e.g. puma)
+#  hosts: tempest_undercloud
+  hosts: "{{ hostname | default('tempest_hosts') }}"
+  vars:
+    ansible_user: stack
+    ansible_port: 222
+  gather_facts: false
+  roles:
+  - role: tester/remote_tempest
+    plugins_group_iterator: tempest_plugins
+  post_tasks:
+#    - name: Print output
+#      debug: var=out.stdout_lines
+#      when: out is defined and out.stdout
+#      tags:
+#      - always
+    - name: Checking if output contains errors
+      fail: msg={{ out.stderr.split('\n') }}
+      when: out.stderr is defined and out.stderr
+#      failed_when: "out.stderr"
+      tags:
+      - always
