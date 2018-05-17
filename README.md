@@ -1,41 +1,23 @@
-# Ansible NFV playbooks
-Ansible NFV repository holds various playbooks for installation, configuration, tuning, testing and day to day tasks related to NFV and Openstack.
+# Ansible Tempest Remote
+Ansible-Tempest-Remote repository holds playbook for deploying Openstack Tempest and Tempest Plugins onto the Undercloud of Openstack Hosts.
+I made it in order to automate the process of setting up Tempest and Tempest Plugins (from Upstream GIT Repositories).
+It is also useful, to allow Remote Debugging, as it will setup ssh tunnel to the Undercloud (which is usually behind NAT).
 
 ## Documentation
-For the repository documentation, refer to the **docs** directory, which provide explanation regarding the playbooks.  
-In order to start working with TripleO environment, refer to the following doc - **docs/tripleo/post_install/tripleo_inventory.md**.  
-The playbook will generate an inventory file for the tripleo environment.
+* [TODO]
 
 **The minimum required version of Ansible for the playbooks >= 2.4**
 
-## Playbooks
-* TripleO
-    * Tester
-      * Tempest
-      * Testpmd deploy and MoonGen run
-      * Testpmd deploy and MoonGen run on secondary NUMA node
-    * Tuning
-      * CPU pinning and Huge pages
-      * Tuned
-    * Post install
-      * Openstack tasks
-      * Overcloud repo install
-      * TripleO Inventory
-* Moongen
-    * Moongen install
-    * Moongen run
-
-## How to contribue
-Patches should be submitted using git review to the GerritHub.
+## Playbooks and Roles
+* [TODO]
 
 ## Note
-Please, modify the playbooks variables to meet your needs before running the playbooks.
+Please modify the undercloud.inventory, before running the playbook, \
+with the required Openstack hosts (which holds the Undercloud), and with required Tempest Git Repositories.
 
-The variables could be applied to the playbook run, by saving them into a separate yml file and include the file during the playbook execution.  
-Note the '@' sign, which is used to apply the variables located within the provided file.
 
 ```
-ansible-playbook playbooks/path/to/the/playbook.yml -e @/path/to/the/variable/file.yml
+ansible-playbook playbooks/remote-debug-tempest.yml -i environments/undercloud.inventory -v
 ```
 
-For any question, refer to the NFV Cloud QE team - nfv-cloud-qe-team@redhat.com
+For any question, feel free to contact me - nmanos@redhat.com

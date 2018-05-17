@@ -1,0 +1,14 @@
+[local]
+localhost ansible_connection=local ansible_host=localhost ansible_user=$USERNAME ansible_ssh_private_key_file=~/.ssh/id_rsa
+#localhost ansible_connection=local ansible_host=localhost ansible_user=$USERNAME ansible_ssh_private_key_file=/home/$USERNAME/.ssh/id_rsa
+
+[tempest_hosts]
+#seal35 ansible_host=seal35.qa.lab.tlv.redhat.com ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_rsa ssh_hosts_file=~/.ssh/known_hosts
+puma09 ansible_host=puma09.scl.lab.tlv.redhat.com ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_rsa ssh_hosts_file=~/.ssh/known_hosts
+#puma09 ansible_host=puma09.scl.lab.tlv.redhat.com ansible_user=root ansible_ssh_private_key_file=/home/$USERNAME/.ssh/id_rsa ssh_hosts_file=/home/$USERNAME/.ssh/known_hosts
+#panther23 ansible_host=panther23.qa.lab.tlv.redhat.com ansible_user=root ansible_ssh_private_key_file=/home/$USERNAME/.ssh/id_rsa
+#seal09 ansible_host=seal08.qa.lab.tlv.redhat.com ansible_user=root ansible_ssh_private_key_file=/home/$USERNAME/.ssh/id_rsa
+
+[tempest_plugins]
+neutron-tempest-plugin repo="https://git.openstack.org/openstack/neutron-tempest-plugin" branch="master"
+octavia-tempest-plugin repo="https://git.openstack.org/openstack/octavia-tempest-plugin" branch="master"
