@@ -1,10 +1,6 @@
 ---
 
 - name: Install Tempest and prerequisites (pip, git, virtualenv, etc.)
-#  tags:
-#    - tempest_debug
-#  when: debug is defined
-  #when: tempest_debug is defined and tempest_debug
   shell: |
     packageList="git gcc python-devel libffi-devel openssl-devel crudini python-tempestconf"
     echo -e "\n* Installing Packages: $packageList"
@@ -45,12 +41,10 @@
   register: out
 
 - name: Install Tempest Plugins (Loop with all [tempest_plugins] listed in Inventory)
-#  tags:
-#    - tempest_debug
   shell: |
     PROMPT_COMMAND=
     set -v
-    #virtualenv .venv
+    virtualenv .venv
     source .venv/bin/activate
 
     remote_repo={{ hostvars[item].repo }}
@@ -75,14 +69,12 @@
 
     pip install -e $local_repo/
     tempest list-plugins
-  with_items: "{{ groups['tempest_plugins'] }}" # "{{ groups[plugins_group_iterator] }}" #groups['tempest_plugins']
+  with_items: "{{ groups['tempest_plugins'] }}"
   register: out
   #  failed_when: "out.stderr"
 
 
 - name: Configure Tempest on Virtual Env. (according to OSP version)
-  tags:
-   - tempest_debug
   shell: |
     #virtualenv .venv
     source .venv/bin/activate
@@ -118,10 +110,10 @@
       crudini --set ./etc/tempest.conf load_balancer admin_role "admin"
 
       # Workaround for BugZilla 1508904 :
-      openstack role list | grep -q load-balancer_member || openstack role create load-balancer_member
+      openstack role list | grep load-balancer_member || openstack role create load-balancer_member
       openstack role add --user demo --project demo load-balancer_member
       openstack role assignment list --names
-      openstack role list | grep -q load-balancer_admin || openstack role create load-balancer_admin
+      openstack role list | grep load-balancer_admin || openstack role create load-balancer_admin
       openstack role add --user demo --project demo load-balancer_admin
       openstack role assignment list --names | awk 'NR<4 || /load-balancer/'
     fi

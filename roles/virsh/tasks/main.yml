@@ -1,0 +1,13 @@
+---
+
+- name: Snapshot the Undercloud (clean state, before tempest setup)
+#  tags:
+#    - tempest_debug
+#  when: debug is defined
+  #when: tempest_debug is defined and tempest_debug
+  shell: |
+    domain_name={{ vars['domain_name'] }}
+    snapshot_name={{ vars['snapshot_name'] }}
+    virsh snapshot-list $domain_name --name | grep $snapshot_name || virsh snapshot-create-as $domain_name $snapshot_name
+  register: out
+  when: create_snapshot

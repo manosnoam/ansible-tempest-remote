@@ -8,12 +8,12 @@
   - role: ssh/ssh_send_rsa_key
     hosts_group_iterator: tempest_hosts
   post_tasks:
-    - name: Checking if output contains errors
-      fail: msg={{ out.stderr.split('\n') }}
-      when: out.stderr is defined and out.stderr
+  - name: Checking if output contains errors
+    fail: msg={{ out.stderr.split('\n') }}
+    when: out is defined and out.stderr is defined and out.stderr
 #      failed_when: "out.stderr"
-      tags:
-      - always
+    tags:
+    - always
 
 - name: Configure Host Firewall
 # hostname can be passed as argument to playbook, otherwise use the default inventory hosts under 'tempest_hosts'
@@ -22,15 +22,34 @@
   roles:
   - ssh/ssh_tunnel
   post_tasks:
-    - name: Checking if output contains errors
-      fail: msg={{ out.stderr.split('\n') }}
-      when: out.stderr is defined and out.stderr
+  - name: Checking if output contains errors
+    fail: msg={{ out.stderr.split('\n') }}
+    when: out is defined and out.stderr is defined and out.stderr
 #      failed_when: "out.stderr"
-      tags:
-      - always
+    tags:
+    - always
+
+- name: Snapshot the Undercloud (clean state, before tempest setup)
+  hosts: "{{ hostname | default('tempest_hosts') }}"
+  vars:
+    create_snapshot: True
+    domain_name: undercloud-0
+    snapshot_name: undercloud-snap-clean
+  gather_facts: false
+  roles:
+  - virsh
+  post_tasks:
+  - name: Checking if output contains errors
+    fail: msg={{ out.stderr.split('\n') }}
+    when: out is defined and out.stderr is defined and out.stderr
+#      failed_when: "out.stderr"
+    tags:
+    - always
 
 - name: Copy SSH Key from localhost to Tempest Undercloud
 # hostname can be passed as argument to playbook, otherwise use the default inventory hosts under 'tempest_hosts'
+#  tags:
+#  - tempest_debug
   hosts: local
   gather_facts: false
   roles:
@@ -40,12 +59,12 @@
     ssh_user: stack
     ssh_port: 222
   post_tasks:
-    - name: Checking if output contains errors
-      fail: msg={{ out.stderr.split('\n') }}
-      when: out.stderr is defined and out.stderr
+  - name: Checking if output contains errors
+    fail: msg={{ out.stderr.split('\n') }}
+    when: out is defined and out.stderr is defined and out.stderr
 #      failed_when: "out.stderr"
-      tags:
-      - always
+    tags:
+    - always
 
 - name: Tempest deployment on Undercloud Virtual Env
 # target host is usually the undercloud-0 VM inside the baremetal host (e.g. puma)
@@ -59,14 +78,9 @@
   - role: remote_tempest
     plugins_group_iterator: tempest_plugins
   post_tasks:
-#    - name: Print output
-#      debug: var=out.stdout_lines
-#      when: out is defined and out.stdout
-#      tags:
-#      - always
-    - name: Checking if output contains errors
-      fail: msg={{ out.stderr.split('\n') }}
-      when: out.stderr is defined and out.stderr
+  - name: Checking if output contains errors
+    fail: msg={{ out.stderr.split('\n') }}
+    when: out is defined and out.rc != 0
 #      failed_when: "out.stderr"
-      tags:
-      - always
+    tags:
+    - always

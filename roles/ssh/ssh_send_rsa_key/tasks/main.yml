@@ -1,14 +1,5 @@
 ---
 - name: Copy SSH Key to Remote server
-#  vars:
-#    host_name: "{{ hostvars[item].ansible_host | default('localhost') }}"
-#    host_user: "{{ vars['ssh_user'] | hostvars[item].ansible_user | default('root') }}"
-#    host_port: "{{ vars['ssh_port'] | hostvars[item].ansible_port | default('22') }}"
-#    debug:
-#      msg: >
-#        host_name = {{ host_name }},
-#        host_user = {{ host_user }},
-#        host_port = {{ host_port }}
   shell: |
     PROMPT_COMMAND=
     set -v
@@ -21,14 +12,13 @@
 
     ssh-keygen -f $hosts_file -R [$host_name]:$host_port
     ssh-keygen -f $hosts_file -R [$host_ip]:$host_port
-    #ssh-add $key_file
-    #ssh -o StrictHostKeyChecking=no $host_user@$host_name -p $host_port
-    #ssh -o StrictHostKeyChecking=no -l $host_user $host_name -p $host_port uptime
+    ssh -o StrictHostKeyChecking=no $host_user@$host_name -p $host_port
     #ssh-copy-id $host_user@$host_name -p $host_port
     ssh-add -l |grep -q `ssh-keygen -lf $key_file  | awk '{print $2}'` || ssh-add $key_file && ssh-copy-id $host_user@$host_name -p $host_port
     set +v
   with_items: "{{ groups[hosts_group_iterator] }}"
   register: out
-#  failed_when: "out.stderr"
+#  failed_when: "out.stderr" is defined
+  failed_when: out is defined and out.stderr is defined and out.stderr and out.rc != 0
 
 
