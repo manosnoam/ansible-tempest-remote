@@ -103,7 +103,7 @@
 
       # Workaround for Octavia missing security group, and Bugzilla 1577635 :
       crudini --set ./etc/tempest.conf load_balancer enable_security_groups "True"
-      crudini --set ./etc/tempest.conf network_feature_enabled port_security "True"
+      crudini --set ./etc/tempest.conf network-feature-enabled port_security "True"
 
       # Workaround for Bugzilla 1577635 :
       crudini --set ./etc/tempest.conf load_balancer member_role "_member_"
