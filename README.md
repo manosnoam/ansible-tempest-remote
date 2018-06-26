@@ -1,20 +1,20 @@
 # Ansible Tempest Remote
-This repository holds playbook for deploying Openstack Tempest and Tempest Plugins\
-onto the Undercloud of Openstack Hosts.\
-I made it in order to automate the process of setting up Tempest and Tempest Plugins\
-(from Upstream GIT Repositories).
+This repository holds an Ansible playbook for deploying [Openstack Tempest](https://docs.openstack.org/tempest/latest) and [Tempest Plugins](https://docs.openstack.org/tempest/latest/plugin-registry.html)\
+onto the [Undercloud of Red Hat OpenStack Platform](https://redhatstackblog.redhat.com/tag/undercloud).
 
-It is also useful, to allow Remote Debugging, as it will setup ssh tunnel to the Undercloud\
-(which is usually behind NAT).
+I made it in order to automate the process of setting up Tempest and required Plugins (from upstream GIT Repositories),
+which are the common testing suite for Openstack projects. 
 
-Prior to the Tempest setup, it will create a virsh snapshot of the "clean" Undercloud vm.
+A good usage of it, is to allow [Python Remote Debugging](https://www.jetbrains.com/help/pycharm/remote-debugging-with-product.html) of the Tempest code - since the playbook will setup an SSH tunnel to the Undercloud (which is probably residing behind NAT).
 
-To use it, you'll need to install Ansible first:
+Prior to the Tempest setup, it will also create a virsh snapshot of the current Undercloud instance, in case you'd like to revert later.
+
+To run Ansible playbook, first install Ansible:
 ````
 yum install ansible
 ````
 
-After downloading Ansible-Tempest-Remote - make sure to modify the undercloud.inventory, with:
+After downloading/cloning Ansible-Tempest-Remote - please make sure to modify the undercloud.inventory, with:
 
 - The required Openstack hostname (which holds the Undercloud).
 - The required Tempest plugins (URLs of Git repositories).
