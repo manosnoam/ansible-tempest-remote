@@ -4,6 +4,13 @@
 ## $ export JJB_DIR=~/VENVS/JJB && source $JJB_DIR/bin/activate
 ## (JJB) $ ansible-playbook playbooks/remote-debug-tempest.yml -i environments/undercloud.inventory -v --check
 
+## To debug by ansible tags, add to the task:
+## tags:
+##   - tempest_debug
+## And run:
+## $ export JJB_DIR=~/VENVS/JJB && source $JJB_DIR/bin/activate
+## (JJB) $ ansible-playbook playbooks/remote-debug-tempest.yml -i environments/undercloud.inventory -v -t tempest_debug
+
 #- post_tasks:
 #  name: Checking if output contains errors
 #  fail: msg={{ out.stderr.split('\n') }}

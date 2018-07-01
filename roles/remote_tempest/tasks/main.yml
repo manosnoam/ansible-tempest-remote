@@ -2,6 +2,9 @@
 
 - name: Install Tempest and prerequisites (pip, git, virtualenv, etc.)
   shell: |
+    PROMPT_COMMAND=
+    set -v
+    sudo rm -f /var/run/yum.pid
     packageList="git gcc python-devel libffi-devel openssl-devel crudini python-tempestconf"
     echo -e "\n* Installing Packages: $packageList"
     for packageName in $packageList; do
@@ -15,13 +18,13 @@
     source .venv/bin/activate
     pip install pytest
 
-    #remote_branch="17.2.0"
-    remote_branch="master"
-    remote_repo="https://github.com/openstack/tempest.git"
-    local_repo=tempest
+    remote_repo={{ hostvars[item].repo }}
+    remote_branch={{ hostvars[item].branch }}
+    local_repo=$(pwd)/$(basename "$remote_repo" ".git")
     echo -e "\n* Git: $remote_repo @ $remote_branch"
 
-    if [ -d $local_repo/.git ]; then
+    # Check if repository already exists:
+    if [ -d $local_repo/.git ] ; then
        echo -e "\n* Local repository exists, pulling..."
        pushd $local_repo
        git branch $remote_branch
@@ -31,16 +34,25 @@
        popd
     else
        echo -e "\n* Cloning..."
-       git clone --depth 1 --branch $remote_branch $remote_repo
+       #git clone --depth 1 --branch $remote_branch $remote_repo
+       git clone $remote_repo
     fi
-    pip install -e $local_repo/
+
+    # If branch is master - install with git local file url, otherwise - install as local directory:
+    if [ "$remote_branch" == "master" ] ; then
+       pip install --exists-action s -e git+file://${local_repo}@${remote_branch}#egg=tempest
+       #pip install --exists-action s -e git+http://github.com/openstack/tempest.git@18.0.0#egg=tempest
+    else
+       pip install -e $local_repo/ tempest==$remote_branch
+    fi
 
     echo -e "\n* Tempest version installed:"
     which tempest
     tempest --version
+  with_items: "{{ groups['tempest_main'] }}"
   register: out
 
-- name: Install Tempest Plugins (Loop with all [tempest_plugins] listed in Inventory)
+- name: Install all Tempest Plugins from inventory group "tempest_plugins"
   shell: |
     PROMPT_COMMAND=
     set -v
@@ -48,12 +60,12 @@
     source .venv/bin/activate
 
     remote_repo={{ hostvars[item].repo }}
-    local_repo=$(basename "$remote_repo")
-    remote_branch="master"
-    #if [ -d $local_repo/.git ]; then pushd $local_repo; git pull; popd; else git clone $remote_repo; fi
-
+    remote_branch={{ hostvars[item].branch }}
+    local_repo=$(pwd)/$(basename "$remote_repo" ".git")
     echo -e "\n* Git: $remote_repo @ $remote_branch"
 
+    # Check if repository already exists:
+    #if [ -d $local_repo/.git ]; then pushd $local_repo; git pull; popd; else git clone $remote_repo; fi
     if [ -d $local_repo/.git ]; then
        echo -e "\n* Local repository exists, pulling..."
        pushd $local_repo
@@ -71,7 +83,6 @@
     tempest list-plugins
   with_items: "{{ groups['tempest_plugins'] }}"
   register: out
-  #  failed_when: "out.stderr"
 
 
 - name: Configure Tempest on Virtual Env. (according to OSP version)
@@ -83,9 +94,9 @@
     tempest workspace list
     cd my_workspace
 
+    echo -e "\n* Modifying tempest.conf (workarounding bugz)"
     osp_version=$(cat /etc/yum.repos.d/latest-installed | awk '{print $1}')
     echo "osp_version = $osp_version"
-    echo -e "\n* Due to BUGZ - Modifying tempest.conf and verify_tempest_config.py :"
 
     if (($osp_version < 11)); then
       /usr/share/openstack-tempest-*/tools/configure-tempest-directory
@@ -94,40 +105,66 @@
       crudini --set ./etc/tempest.conf image-feature-enabled api_v2 "False"
     else
       discover-tempest-config --deployer-input ~/tempest-deployer-input.conf --debug --create identity.uri $OS_AUTH_URL identity.admin_password $OS_PASSWORD
-      crudini --del ./etc/tempest.conf volume-feature-enabled api_extensions
-
-      # Workaround for BugZilla 1562085 :
-      crudini --set ./etc/tempest.conf validation run_validation "True"
-      crudini --set ./etc/tempest.conf service_available load_balancer "True"
-      sed -i.bak "354i\\\t'load_balancer': 'load_balancer'," /home/stack/.venv/lib/python2.7/site-packages/tempest/cmd/verify_tempest_config.py
-
-      # Workaround for Octavia missing security group, and Bugzilla 1577635 :
-      crudini --set ./etc/tempest.conf load_balancer enable_security_groups "True"
-      crudini --set ./etc/tempest.conf network-feature-enabled port_security "True"
-
-      # Workaround for Bugzilla 1577635 :
-      crudini --set ./etc/tempest.conf load_balancer member_role "_member_"
-      crudini --set ./etc/tempest.conf load_balancer admin_role "admin"
-
-      # Workaround for BugZilla 1508904 :
-      openstack role list | grep load-balancer_member || openstack role create load-balancer_member
-      openstack role add --user demo --project demo load-balancer_member
-      openstack role assignment list --names
-      openstack role list | grep load-balancer_admin || openstack role create load-balancer_admin
-      openstack role add --user demo --project demo load-balancer_admin
-      openstack role assignment list --names | awk 'NR<4 || /load-balancer/'
     fi
 
-    # Workaround for activating tempest debug output:
-    crudini --set ./etc/tempest.conf DEFAULT debug "true"
-    crudini --set ./etc/tempest.conf DEFAULT use_stderr "true"
+    # Workaround for BugZilla 1557736 (discover-tempest-config):
+    crudini --del ./etc/tempest.conf volume-feature-enabled api_extensions
 
-    echo -e "\n* Verifing Tempest config inside workspace: $PWD"
+    # Workaround for BugZilla ?????? (discover-tempest-config):
+    # crudini --del ./etc/tempest.conf volume-feature-enabled api_v2
+  register: out
+
+
+- name: Modifying tempest.conf for octavia-tempest-plugin
+  when: "groups['tempest_plugins'] | select('search','octavia') | list"
+  shell: |
+    #virtualenv .venv
+    source .venv/bin/activate
+    source ~/overcloudrc
+    cd my_workspace
+
+    echo -e "\n* Modifying tempest.conf for octavia-tempest-plugin:"
+
+    # Workaround for BugZilla 1562085 (Octavia):
+    crudini --set ./etc/tempest.conf validation run_validation "True"
+    crudini --set ./etc/tempest.conf service_available load_balancer "True"
+    sed -i.bak "354i\\\t'load_balancer': 'load_balancer'," /home/stack/.venv/lib/python2.7/site-packages/tempest/cmd/verify_tempest_config.py
+    sed -i.bak "354i\\\t'load_balancer': 'load_balancer'," /home/stack/tempest/tempest/cmd/verify_tempest_config.py
+
+    # Workaround for Octavia missing security group, and Bugzilla 1577635 :
+    crudini --set ./etc/tempest.conf load_balancer enable_security_groups "True"
+    crudini --set ./etc/tempest.conf network-feature-enabled port_security "True"
+
+    # Workaround for Bugzilla 1577635 (Octavia):
+    crudini --set ./etc/tempest.conf load_balancer member_role "_member_"
+    crudini --set ./etc/tempest.conf load_balancer admin_role "admin"
+
+    # Workaround for BugZilla 1508904 (Octavia):
+    openstack role list | grep load-balancer_member || openstack role create load-balancer_member
+    openstack role add --user demo --project demo load-balancer_member
+    openstack role assignment list --names
+    openstack role list | grep load-balancer_admin || openstack role create load-balancer_admin
+    openstack role add --user demo --project demo load-balancer_admin
+    openstack role assignment list --names | awk 'NR<4 || /load-balancer/'
+  register: out
+#  tags:
+#    - tempest_debug
+
+
+- name: Verifying Tempest Config
+  shell: |
+    #virtualenv .venv
+    source .venv/bin/activate
+    source ~/overcloudrc
+    cd my_workspace
+
+    # Setting tempest to DEBUG output:
+    # crudini --set ./etc/tempest.conf DEFAULT debug "true"
+    # crudini --set ./etc/tempest.conf DEFAULT use_stderr "true"
+
+    echo -e "\n* Verifying Tempest config inside workspace: $PWD"
     #python ~/.venv/bin/tempest verify-config
     tempest verify-config -o ./etc/tempest.conf
     sudo cp -rp ./etc/tempest.conf /etc/tempest/
     ls -l /etc/tempest/tempest.conf
   register: out
-  #  failed_when: "out.stderr"
-
-
