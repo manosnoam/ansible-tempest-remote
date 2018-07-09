@@ -10,7 +10,7 @@
   post_tasks:
   - name: Checking if output contains errors
     fail: msg={{ out.stderr.split('\n') }}
-    when: out is defined and out.stderr is defined and out.stderr
+    when: out is defined and out.stderr is defined and (out.stderr | lower | regex_search('error|fail') or out.rc != 0)
 #      failed_when: "out.stderr"
     tags:
     - always
@@ -24,7 +24,7 @@
   post_tasks:
   - name: Checking if output contains errors
     fail: msg={{ out.stderr.split('\n') }}
-    when: out is defined and out.stderr is defined and out.stderr
+    when: out is defined and out.stderr is defined and (out.stderr | lower | regex_search('error|fail') or out.rc != 0)
 #      failed_when: "out.stderr"
     tags:
     - always
@@ -41,7 +41,7 @@
   post_tasks:
   - name: Checking if output contains errors
     fail: msg={{ out.stderr.split('\n') }}
-    when: out is defined and out.stderr is defined and out.stderr
+    when: out is defined and out.stderr is defined and (out.stderr | lower | regex_search('error|fail') or out.rc != 0)
 #      failed_when: "out.stderr"
     tags:
     - always
@@ -61,7 +61,7 @@
   post_tasks:
   - name: Checking if output contains errors
     fail: msg={{ out.stderr.split('\n') }}
-    when: out is defined and out.stderr is defined and out.stderr
+    when: out is defined and out.stderr is defined and (out.stderr | lower | regex_search('error|fail') or out.rc != 0)
 #      failed_when: "out.stderr"
     tags:
     - always
@@ -80,7 +80,7 @@
   post_tasks:
   - name: Checking if output contains errors
     fail: msg={{ out.stderr.split('\n') }}
-    when: out is defined and out.stderr is defined and (out.stderr or out.rc != 0)
+    when: out is defined and out.stderr is defined and (out.stderr | lower | regex_search('error|fail') or out.rc != 0)
 #      failed_when: "out.stderr"
     tags:
     - always

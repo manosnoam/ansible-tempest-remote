@@ -8,9 +8,8 @@ titan09 ansible_host=titan09.lab.eng.tlv2.redhat.com ansible_user=root ansible_s
 #panther23 ansible_host=panther23.qa.lab.tlv.redhat.com ansible_user=root ansible_ssh_private_key_file=/home/$USERNAME/.ssh/id_rsa
 #seal08 ansible_host=seal08.qa.lab.tlv.redhat.com ansible_user=root ansible_ssh_private_key_file=/home/$USERNAME/.ssh/id_rsa
 
-
 [tempest_main]
-tempest repo="https://github.com/openstack/tempest.git" branch="18.0.0"
+tempest repo="https://github.com/openstack/tempest.git" branch="master"
 
 [tempest_plugins]
 neutron-tempest-plugin repo="https://git.openstack.org/openstack/neutron-tempest-plugin" branch="master"

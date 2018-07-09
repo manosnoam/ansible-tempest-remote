@@ -168,3 +168,5 @@
     sudo cp -rp ./etc/tempest.conf /etc/tempest/
     ls -l /etc/tempest/tempest.conf
   register: out
+#  tags:
+#  - tempest_debug

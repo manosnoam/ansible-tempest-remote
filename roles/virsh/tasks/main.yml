@@ -1,10 +1,6 @@
 ---
 
 - name: Snapshot the Undercloud (clean state, before tempest setup)
-#  tags:
-#    - tempest_debug
-#  when: debug is defined
-  #when: tempest_debug is defined and tempest_debug
   shell: |
     domain_name={{ vars['domain_name'] }}
     snapshot_name={{ vars['snapshot_name'] }}
