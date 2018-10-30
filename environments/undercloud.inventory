@@ -3,14 +3,15 @@ localhost ansible_connection=local ansible_host=localhost ansible_user=$USERNAME
 
 [tempest_hosts]
 #seal35 ansible_host=seal35.qa.lab.tlv.redhat.com ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_rsa ssh_hosts_file=~/.ssh/known_hosts
-#puma09 ansible_host=puma09.scl.lab.tlv.redhat.com ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_rsa ssh_hosts_file=~/.ssh/known_hosts
-titan09 ansible_host=titan09.lab.eng.tlv2.redhat.com ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_rsa ssh_hosts_file=~/.ssh/known_hosts
-#panther23 ansible_host=panther23.qa.lab.tlv.redhat.com ansible_user=root ansible_ssh_private_key_file=/home/$USERNAME/.ssh/id_rsa
-#seal08 ansible_host=seal08.qa.lab.tlv.redhat.com ansible_user=root ansible_ssh_private_key_file=/home/$USERNAME/.ssh/id_rsa
+puma09 ansible_host=puma09.scl.lab.tlv.redhat.com ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_rsa ssh_hosts_file=~/.ssh/known_hosts
+titan08 ansible_host=titan08.lab.eng.tlv2.redhat.com ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_rsa ssh_hosts_file=~/.ssh/known_hosts
+panther24 ansible_host=panther24.lab.eng.tlv2.redhat.com ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_rsa ssh_hosts_file=~/.ssh/known_hosts
+titan13 ansible_host=titan13.lab.eng.tlv2.redhat.com ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_rsa ssh_hosts_file=~/.ssh/known_hosts
 
-[tempest_main]
+
+[tempest_git_main]
 tempest repo="https://github.com/openstack/tempest.git" branch="master"
 
-[tempest_plugins]
+[tempest_git_plugins]
 neutron-tempest-plugin repo="https://git.openstack.org/openstack/neutron-tempest-plugin" branch="master"
 #octavia-tempest-plugin repo="https://git.openstack.org/openstack/octavia-tempest-plugin" branch="master"

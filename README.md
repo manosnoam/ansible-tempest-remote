@@ -5,33 +5,37 @@ onto the [Undercloud of Red Hat OpenStack Platform](https://redhatstackblog.redh
 I made it in order to automate the process of setting up Tempest and required Plugins (from upstream GIT Repositories),
 which are the common testing suite for Openstack projects. 
 
-A good usage of it, is to allow [Python Remote Debugging](https://www.jetbrains.com/help/pycharm/remote-debugging-with-product.html) of the Tempest code - since the playbook will setup an SSH tunnel to the Undercloud (which is probably residing behind NAT).
+One usecase of this script, is to allow [Python Remote Debugging](https://www.jetbrains.com/help/pycharm/remote-debugging-with-product.html) of the Tempest code - since the playbook will setup an SSH tunnel to the Undercloud (which is probably residing behind NAT).
 
-Prior to the Tempest setup, it will also create a virsh snapshot of the current Undercloud instance, in case you'd like to revert later.
+Prior to the Tempest setup, it will also create a virt snapshot of the current Undercloud instance, in case you'd like to revert later.
 
-To run Ansible playbook, first install Ansible:
+## Installing
+In order to run this Ansible playbook, first install Ansible:
 ````
 yum install ansible
 ````
+
+**The minimum required version of Ansible for the playbooks >= 2.4**
 
 After downloading/cloning Ansible-Tempest-Remote - please make sure to modify the undercloud.inventory, with:
 
 - The required Openstack hostname (which holds the Undercloud).
 - The required Tempest plugins (URLs of Git repositories).
 
-
-To run the playbook:
+## Running
+To run the playbook on all of the defined hosts of undercloud.inventory:
 ````
-ansible-playbook playbooks/remote-debug-tempest.yml -i environments/undercloud.inventory -v
+ansible-playbook playbooks/remote-debug-tempest.yml -i environments/undercloud.inventory
 ````
 
-## Documentation
-* [TODO]
+It is recommended to initially test the playbook in "dry-run" mode: `--check`, and also use verbosity: `-v`.
 
-**The minimum required version of Ansible for the playbooks >= 2.4**
 
-## Playbooks and Roles
-* [TODO]
+To run on a specific host (that was pre-defined in undercloud.inventory, e.g. "titan13"):
+````
+ansible-playbook playbooks/remote-debug-tempest.yml -i environments/undercloud.inventory -e "hostname=titan13"
+````
 
+![](resources/ansible-tempest-remote.gif)
 
 For any question, feel free to contact me - nmanos@redhat.com

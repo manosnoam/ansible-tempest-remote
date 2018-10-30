@@ -3,7 +3,6 @@
 - name: Snapshot the Undercloud (clean state, before tempest setup)
   shell: |
     domain_name={{ vars['domain_name'] }}
-    snapshot_name={{ vars['snapshot_name'] }}
-    virsh snapshot-list $domain_name --name | grep $snapshot_name || virsh snapshot-create-as $domain_name $snapshot_name
+    virsh snapshot-list $domain_name --name | grep $domain_name || virsh snapshot-create-as $domain_name ${domain_name}_clean
   register: out
   when: create_snapshot

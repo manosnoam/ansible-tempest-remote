@@ -1,7 +1,8 @@
 ---
 
-## Run Example:
+## Run Example (adding --check just for "dry-run". If passed, try to run without it):
 ## $ export JJB_DIR=~/VENVS/JJB && source $JJB_DIR/bin/activate
+##
 ## (JJB) $ ansible-playbook playbooks/remote-debug-tempest.yml -i environments/undercloud.inventory -v --check
 
 ## To debug by ansible tags, add to the task:
@@ -10,6 +11,9 @@
 ## And run:
 ## $ export JJB_DIR=~/VENVS/JJB && source $JJB_DIR/bin/activate
 ## (JJB) $ ansible-playbook playbooks/remote-debug-tempest.yml -i environments/undercloud.inventory -v -t tempest_debug
+##
+## To specify a specific host from command line:
+## ansible-playbook playbooks/remote-debug-tempest.yml -i environments/undercloud.inventory -v -e "hostname=panther24"
 
 #- post_tasks:
 #  name: Checking if output contains errors

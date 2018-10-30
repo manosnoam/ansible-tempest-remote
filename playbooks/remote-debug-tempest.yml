@@ -1,12 +1,16 @@
 ---
 
-- name: Copy SSH Key from localhost to Tempest Host
+- name: Copy SSH Key from localhost to Remote Virt Host (bare-metal)
 # hostname can be passed as argument to playbook, otherwise use the default inventory hosts under 'tempest_hosts'
   hosts: local
-  gather_facts: False
-  roles:
-  - role: ssh/ssh_send_rsa_key
-    hosts_group_iterator: tempest_hosts
+  vars:
+    filter: "{{ hostname | default('.*') }}"
+  gather_facts: false
+  tasks:
+  - include_role: name=ssh/ssh_send_rsa_key
+    with_items: "{{ groups['tempest_hosts'] | select('search',filter) | list }}"
+    loop_control:
+      loop_var: server
   post_tasks:
   - name: Checking if output contains errors
     fail: msg={{ out.stderr.split('\n') }}
@@ -18,9 +22,14 @@
 - name: Configure Host Firewall
 # hostname can be passed as argument to playbook, otherwise use the default inventory hosts under 'tempest_hosts'
   hosts: "{{ hostname | default('tempest_hosts') }}"
+  vars:
+#    filter: "{{ hostname | default('.*') }}"
   gather_facts: false
-  roles:
-  - ssh/ssh_tunnel
+  tasks:
+  - include_role: name=ssh/ssh_tunnel
+#    with_items: "{{ groups['tempest_hosts'] | select('search',filter) | list }}"
+#    loop_control:
+#      loop_var: server
   post_tasks:
   - name: Checking if output contains errors
     fail: msg={{ out.stderr.split('\n') }}
@@ -34,10 +43,13 @@
   vars:
     create_snapshot: True
     domain_name: undercloud-0
-    snapshot_name: undercloud-snap-clean
+#    filter: "{{ hostname | default('.*') }}"
   gather_facts: false
-  roles:
-  - virsh
+  tasks:
+  - include_role: name=virsh
+#    with_items: "{{ groups['tempest_hosts'] | select('search',filter) | list }}"
+#    loop_control:
+#      loop_var: server
   post_tasks:
   - name: Checking if output contains errors
     fail: msg={{ out.stderr.split('\n') }}
@@ -51,13 +63,16 @@
 #  tags:
 #  - tempest_debug
   hosts: local
-  gather_facts: false
-  roles:
-  - role: ssh/ssh_send_rsa_key
-#    hosts_group_iterator: tempest_undercloud
-    hosts_group_iterator: tempest_hosts
+  vars:
     ssh_user: stack
     ssh_port: 222
+    filter: "{{ hostname | default('.*') }}"
+  gather_facts: false
+  tasks:
+  - include_role: name=ssh/ssh_send_rsa_key
+    with_items: "{{ groups['tempest_hosts'] | select('search',filter) | list }}"
+    loop_control:
+      loop_var: server
   post_tasks:
   - name: Checking if output contains errors
     fail: msg={{ out.stderr.split('\n') }}
@@ -68,15 +83,19 @@
 
 - name: Tempest deployment on Undercloud Virtual Env
 # target host is usually the undercloud-0 VM inside the baremetal host (e.g. puma)
-#  hosts: tempest_undercloud
   hosts: "{{ hostname | default('tempest_hosts') }}"
   vars:
     ansible_user: stack
     ansible_port: 222
+#    ssh_user: stack
+#    ssh_port: 222
+#    filter: "{{ hostname | default('.*') }}"
   gather_facts: false
-  roles:
-  - role: remote_tempest
-    plugins_group_iterator: tempest_plugins
+  tasks:
+  - include_role: name=remote_tempest
+#    with_items: "{{ groups['tempest_hosts'] | select('search',filter) | list }}"
+#    loop_control:
+#      loop_var: server
   post_tasks:
   - name: Checking if output contains errors
     fail: msg={{ out.stderr.split('\n') }}

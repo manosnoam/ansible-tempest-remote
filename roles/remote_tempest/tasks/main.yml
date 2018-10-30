@@ -1,23 +1,45 @@
 ---
 
-- name: Install Tempest and prerequisites (pip, git, virtualenv, etc.)
+- name: Install Yum packages for Tempest (git gcc python-devel libffi-devel openssl-devel crudini python-tempestconf)
   shell: |
     PROMPT_COMMAND=
     set -v
     sudo rm -f /var/run/yum.pid
     packageList="git gcc python-devel libffi-devel openssl-devel crudini python-tempestconf"
-    echo -e "\n* Installing Packages: $packageList"
     for packageName in $packageList; do
+      echo -e "\n* Installing Package: $packageName"
       rpm --quiet --query $packageName || sudo yum install -y $packageName
     done
+  register: out
 
-    echo -e "\n* Installing Pip, VirtualEnv and Pytest:"
+- name: Install Pip packages for Tempest (pip, setuptools, virtualenv, pytest)
+  shell: |
+    PROMPT_COMMAND=
+    set -v
+    echo -e "\n* Installing Pip, SetupTools and VirtualEnv:"
     sudo easy_install pip
-    sudo pip install virtualenv
-    virtualenv .venv
+    sudo pip install setuptools --upgrade
+    sudo pip install virtualenv --upgrade
+    echo -e "\n* Installing Pytest inside VirtualEnv:"
+    virtualenv .venv -v
     source .venv/bin/activate
     pip install pytest
+    #Fix for RequestsDependencyWarning on urllib3 version
+    pip install --upgrade "urllib3==1.23"
+    deactivate
+  register: out
 
+- name: Install Tempest framework
+  shell: |
+    PROMPT_COMMAND=
+    set -v
+    #virtualenv .venv -v
+    source .venv/bin/activate
+
+    echo -e "\n* Removing existing Tempest and Plugins:"
+    pip list | grep tempest | xargs pip uninstall -y
+
+    echo -e "\n* Installing Tempest from Git repository:"
     remote_repo={{ hostvars[item].repo }}
     remote_branch={{ hostvars[item].branch }}
     local_repo=$(pwd)/$(basename "$remote_repo" ".git")
@@ -49,14 +71,15 @@
     echo -e "\n* Tempest version installed:"
     which tempest
     tempest --version
-  with_items: "{{ groups['tempest_main'] }}"
+    deactivate
+  with_items: "{{ groups['tempest_git_main'] }}"
   register: out
 
-- name: Install all Tempest Plugins from inventory group "tempest_plugins"
+- name: Install all Tempest Plugins from inventory group "tempest_git_plugins"
   shell: |
     PROMPT_COMMAND=
     set -v
-    virtualenv .venv
+    #virtualenv .venv -v
     source .venv/bin/activate
 
     remote_repo={{ hostvars[item].repo }}
@@ -81,15 +104,17 @@
 
     pip install -e $local_repo/
     tempest list-plugins
-  with_items: "{{ groups['tempest_plugins'] }}"
+    deactivate
+  with_items: "{{ groups['tempest_git_plugins'] }}"
   register: out
 
 
 - name: Configure Tempest on Virtual Env. (according to OSP version)
   shell: |
-    #virtualenv .venv
+    #virtualenv .venv -v
     source .venv/bin/activate
     source ~/overcloudrc
+    tempest workspace list | grep my_workspace && tempest workspace remove --name my_workspace || echo No tempest my_workspace
     tempest init my_workspace
     tempest workspace list
     cd my_workspace
@@ -111,14 +136,17 @@
     crudini --del ./etc/tempest.conf volume-feature-enabled api_extensions
 
     # Workaround for BugZilla ?????? (discover-tempest-config):
+    # Config option api_v2 in group volume-feature-enabled should be changed to: True
     # crudini --del ./etc/tempest.conf volume-feature-enabled api_v2
+    crudini --set ./etc/tempest.conf volume-feature-enabled api_v2 "True"
+    deactivate
   register: out
 
 
 - name: Modifying tempest.conf for octavia-tempest-plugin
-  when: "groups['tempest_plugins'] | select('search','octavia') | list"
+  when: "groups['tempest_git_plugins'] | select('search','octavia') | list"
   shell: |
-    #virtualenv .venv
+    #virtualenv .venv -v
     source .venv/bin/activate
     source ~/overcloudrc
     cd my_workspace
@@ -146,6 +174,7 @@
     openstack role list | grep load-balancer_admin || openstack role create load-balancer_admin
     openstack role add --user demo --project demo load-balancer_admin
     openstack role assignment list --names | awk 'NR<4 || /load-balancer/'
+    deactivate
   register: out
 #  tags:
 #    - tempest_debug
@@ -153,7 +182,7 @@
 
 - name: Verifying Tempest Config
   shell: |
-    #virtualenv .venv
+    #virtualenv .venv -v
     source .venv/bin/activate
     source ~/overcloudrc
     cd my_workspace
@@ -165,8 +194,9 @@
     echo -e "\n* Verifying Tempest config inside workspace: $PWD"
     #python ~/.venv/bin/tempest verify-config
     tempest verify-config -o ./etc/tempest.conf
-    sudo cp -rp ./etc/tempest.conf /etc/tempest/
-    ls -l /etc/tempest/tempest.conf
+    [ -d /etc/tempest/ ] && sudo cp -rp ./etc/tempest.conf /etc/tempest/ && ls -l /etc/tempest/tempest.conf
+    ostestr -l | grep basic
+    deactivate
   register: out
 #  tags:
 #  - tempest_debug
