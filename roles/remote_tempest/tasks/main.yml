@@ -1,11 +1,23 @@
 ---
 
-- name: Install Yum packages for Tempest (git gcc python-devel libffi-devel openssl-devel crudini python-tempestconf)
-  shell: |
+- name: Install Yum packages for Tempest (git gcc python-devel libffi-devel openssl-devel crudini)
+  raw: |
     PROMPT_COMMAND=
     set -v
     sudo rm -f /var/run/yum.pid
-    packageList="git gcc python-devel libffi-devel openssl-devel crudini python-tempestconf"
+
+    if [[ -f /usr/bin/python3 ]] && [[ ! -f /usr/bin/python ]] ; then
+      sudo ln --symbolic /usr/bin/python3 /usr/bin/python;
+    fi
+    if [[ -f /usr/bin/pip3 ]] && [[ ! -f /usr/bin/pip ]] ; then
+          sudo ln --symbolic /usr/bin/pip3 /usr/bin/pip;
+    fi
+    if [[ "$(/usr/bin/python -V)" =~ "Python 3" ]] ; then
+      packageList="git gcc 'development tools' libffi-devel openssl-devel crudini"
+    else
+      packageList="git gcc python-devel libffi-devel openssl-devel crudini"
+    fi
+
     for packageName in $packageList; do
       echo -e "\n* Installing Package: $packageName"
       rpm --quiet --query $packageName || sudo yum install -y $packageName
@@ -18,6 +30,7 @@
     set -v
     echo -e "\n* Installing Pip, SetupTools and VirtualEnv:"
     sudo easy_install pip
+    # sudo pip install python-dev
     sudo pip install setuptools --upgrade
     sudo pip install virtualenv --upgrade
     echo -e "\n* Installing Pytest inside VirtualEnv:"
@@ -26,6 +39,11 @@
     pip install pytest
     #Fix for RequestsDependencyWarning on urllib3 version
     pip install --upgrade "urllib3==1.23"
+    #Fix tempest 20.0.0 has requirement jsonschema<3.0.0,>=2.6.0
+    #pip install --upgrade "jsonschema==2.6.0"
+    #pip install --exists-action s -e git+https://git.openstack.org/openstack/python-tempestconf@1.1.4#egg=python-tempestconf
+    # Fix for missing python-tempestconf
+    pip install python-tempestconf
     deactivate
   register: out
 
@@ -63,7 +81,7 @@
     # If branch is master - install with git local file url, otherwise - install as local directory:
     if [ "$remote_branch" == "master" ] ; then
        pip install --exists-action s -e git+file://${local_repo}@${remote_branch}#egg=tempest
-       #pip install --exists-action s -e git+http://github.com/openstack/tempest.git@18.0.0#egg=tempest
+       #pip install --exists-action s -e git+http://${remote_repo}@${remote_branch}#egg=tempest
     else
        pip install -e $local_repo/ tempest==$remote_branch
     fi
@@ -139,6 +157,7 @@
     # Config option api_v2 in group volume-feature-enabled should be changed to: True
     # crudini --del ./etc/tempest.conf volume-feature-enabled api_v2
     crudini --set ./etc/tempest.conf volume-feature-enabled api_v2 "True"
+    crudini --set ./etc/tempest.conf image-feature-enabled api_v2 "True"
     deactivate
   register: out
 
@@ -195,7 +214,12 @@
     #python ~/.venv/bin/tempest verify-config
     tempest verify-config -o ./etc/tempest.conf
     [ -d /etc/tempest/ ] && sudo cp -rp ./etc/tempest.conf /etc/tempest/ && ls -l /etc/tempest/tempest.conf
-    ostestr -l | grep basic
+
+    # List Tests with ostestr on Tempest <= 18.0.0
+    # ostestr -l | grep basic
+    # List Tests with ostestr on Tempest => 20.0.0
+    stestr list | grep basic
+
     deactivate
   register: out
 #  tags:

@@ -1,0 +1,10 @@
+---
+- name: Checking if output contains errors
+  fail: msg={{ out.stderr.split('\n') }}
+  when: out is defined and out.stderr is defined and (out.stderr | lower | regex_search('error|fail|not found|stacktrace') or out.rc != 0)
+#  when: out is defined and out.stdout is defined and (out.stdout | lower | regex_search('k noam') or out.rc != 0)
+#      failed_when: "out.stderr"
+  tags:
+  - always
+
+

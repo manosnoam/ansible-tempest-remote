@@ -25,7 +25,7 @@ After downloading/cloning Ansible-Tempest-Remote - please make sure to modify th
 ## Running
 To run the playbook on all of the defined hosts of undercloud.inventory:
 ````
-ansible-playbook playbooks/remote-debug-tempest.yml -i environments/undercloud.inventory
+ansible-playbook playbooks/remote-debug-tempest.yml
 ````
 
 It is recommended to initially test the playbook in "dry-run" mode: `--check`, and also use verbosity: `-v`.
@@ -33,7 +33,7 @@ It is recommended to initially test the playbook in "dry-run" mode: `--check`, a
 
 To run on a specific host (that was pre-defined in undercloud.inventory, e.g. "titan13"):
 ````
-ansible-playbook playbooks/remote-debug-tempest.yml -i environments/undercloud.inventory -e "hostname=titan13"
+ansible-playbook playbooks/remote-debug-tempest.yml -e "hostname=titan13"
 ````
 
 ![](resources/ansible-tempest-remote.gif)

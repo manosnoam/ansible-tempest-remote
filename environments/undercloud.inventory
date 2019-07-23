@@ -3,14 +3,16 @@ localhost ansible_connection=local ansible_host=localhost ansible_user=$USERNAME
 
 [tempest_hosts]
 #seal35 ansible_host=seal35.qa.lab.tlv.redhat.com ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_rsa ssh_hosts_file=~/.ssh/known_hosts
-puma09 ansible_host=puma09.scl.lab.tlv.redhat.com ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_rsa ssh_hosts_file=~/.ssh/known_hosts
-titan08 ansible_host=titan08.lab.eng.tlv2.redhat.com ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_rsa ssh_hosts_file=~/.ssh/known_hosts
-panther24 ansible_host=panther24.lab.eng.tlv2.redhat.com ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_rsa ssh_hosts_file=~/.ssh/known_hosts
-titan13 ansible_host=titan13.lab.eng.tlv2.redhat.com ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_rsa ssh_hosts_file=~/.ssh/known_hosts
+#puma09 ansible_host=puma09.scl.lab.tlv.redhat.com ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_rsa ssh_hosts_file=~/.ssh/known_hosts
+#titan08 ansible_host=titan08.lab.eng.tlv2.redhat.com ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_rsa ssh_hosts_file=~/.ssh/known_hosts
+#panther24 ansible_host=panther24.lab.eng.tlv2.redhat.com ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_rsa ssh_hosts_file=~/.ssh/known_hosts
+#titan13 ansible_host=titan13.lab.eng.tlv2.redhat.com ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_rsa ssh_hosts_file=~/.ssh/known_hosts
+#titan10 ansible_host=titan10.lab.eng.tlv2.redhat.com ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_rsa ssh_hosts_file=~/.ssh/known_hosts
+#titan62 ansible_host=titan62.lab.eng.tlv2.redhat.com ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_rsa ssh_hosts_file=~/.ssh/known_hosts
 
 
 [tempest_git_main]
-tempest repo="https://github.com/openstack/tempest.git" branch="master"
+tempest repo="https://github.com/openstack/tempest.git" branch="20.0.0"
 
 [tempest_git_plugins]
 neutron-tempest-plugin repo="https://git.openstack.org/openstack/neutron-tempest-plugin" branch="master"
