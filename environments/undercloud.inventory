@@ -9,6 +9,7 @@ localhost ansible_connection=local ansible_host=localhost ansible_user=$USERNAME
 #titan13 ansible_host=titan13.lab.eng.tlv2.redhat.com ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_rsa ssh_hosts_file=~/.ssh/known_hosts
 #titan10 ansible_host=titan10.lab.eng.tlv2.redhat.com ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_rsa ssh_hosts_file=~/.ssh/known_hosts
 #titan62 ansible_host=titan62.lab.eng.tlv2.redhat.com ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_rsa ssh_hosts_file=~/.ssh/known_hosts
+#titan64 ansible_host=titan64.lab.eng.tlv2.redhat.com ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_rsa ssh_hosts_file=~/.ssh/known_hosts
 
 
 [tempest_git_main]

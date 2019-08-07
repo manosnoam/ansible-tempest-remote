@@ -1,0 +1,11 @@
+---
+- name: My debug shell task
+  shell: |
+    PROMPT_COMMAND=
+    set -v
+    run_bad_cmd.sh
+    set +v
+  register: out
+
+
+

@@ -12,13 +12,15 @@
 
     echo Generating SSH key for both hostname = $host_name, and ip = $host_ip
     echo Where user = $host_user, port = $host_port, key = $key_file, hosts_file = $hosts_file
+    ssh-keygen -f $hosts_file -R $host_name
     ssh-keygen -f $hosts_file -R [$host_name]:$host_port
+    ssh-keygen -f $hosts_file -R $host_ip
     ssh-keygen -f $hosts_file -R [$host_ip]:$host_port
-    ssh -o StrictHostKeyChecking=no $host_user@$host_name -p $host_port
-    #ssh-copy-id $host_user@$host_name -p $host_port
-    ssh-add -l |grep -q `ssh-keygen -lf $key_file  | awk '{print $2}'` || ssh-add $key_file && ssh-copy-id $host_user@$host_name -p $host_port
+    ssh -o StrictHostKeyChecking=no $host_user@$host_name -p $host_port uptime
+    #ssh-copy-id -f $host_user@$host_name -p $host_port
+    ssh-add -l |grep -q `ssh-keygen -lf $key_file  | awk '{print $2}'` || ssh-add $key_file && ssh-copy-id -f $host_user@$host_name -p $host_port
     set +v
   register: out
-  failed_when: out.stderr is defined and (out.stderr | lower | regex_search('error|fail') or out.rc != 0)
+#  failed_when: out.stderr is defined and (out.stderr | lower | regex_search('error|fail') or out.rc != 0)
 
 

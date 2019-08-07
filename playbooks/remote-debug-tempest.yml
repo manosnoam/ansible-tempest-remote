@@ -13,12 +13,6 @@
       loop_var: server
   post_tasks:
   - include_role: name=pre_post_tasks/check_output_error
-#  - name: Checking if output contains errors
-#    fail: msg={{ out.stderr.split('\n') }}
-#    when: out is defined and out.stderr is defined and (out.stderr | lower | regex_search('error|fail') or out.rc != 0)
-##      failed_when: "out.stderr"
-#    tags:
-#    - always
 
 - name: Configure Host Firewall with ssh tunnel on port 222
 # hostname can be passed as argument to playbook, otherwise use the default inventory hosts under 'tempest_hosts'
@@ -33,12 +27,6 @@
 #      loop_var: server
   post_tasks:
   - include_role: name=pre_post_tasks/check_output_error
-#  - name: Checking if output contains errors
-#    fail: msg={{ out.stderr.split('\n') }}
-#    when: out is defined and out.stderr is defined and (out.stderr | lower | regex_search('error|fail') or out.rc != 0)
-##      failed_when: "out.stderr"
-#    tags:
-#    - always
 
 - name: Snapshot the Undercloud (clean state, before tempest setup)
   hosts: "{{ hostname | default('tempest_hosts') }}"
@@ -54,12 +42,6 @@
 #      loop_var: server
   post_tasks:
   - include_role: name=pre_post_tasks/check_output_error
-#  - name: Checking if output contains errors
-#    fail: msg={{ out.stderr.split('\n') }}
-#    when: out is defined and out.stderr is defined and (out.stderr | lower | regex_search('error|fail') or out.rc != 0)
-##      failed_when: "out.stderr"
-#    tags:
-#    - always
 
 - name: Copy SSH Key from localhost to Tempest Undercloud via tunnel port 222
 # hostname can be passed as argument to playbook, otherwise use the default inventory hosts under 'tempest_hosts'
@@ -78,12 +60,6 @@
       loop_var: server
   post_tasks:
   - include_role: name=pre_post_tasks/check_output_error
-#  - name: Checking if output contains errors
-#    fail: msg={{ out.stderr.split('\n') }}
-#    when: out is defined and out.stderr is defined and (out.stderr | lower | regex_search('error|fail') or out.rc != 0)
-##      failed_when: "out.stderr"
-#    tags:
-#    - always
 
 - name: Tempest deployment on Undercloud Virtual Env
 # target host is usually the undercloud-0 VM inside the baremetal host (e.g. puma)
